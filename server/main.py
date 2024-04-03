@@ -1,20 +1,23 @@
 from flask import Flask, jsonify
-from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-cors = CORS(app, origins='*')
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+users = ['zvia', 'zac', 'jessie']
 
 @app.route("/api/users", methods=['GET'])
-def users():
-    return jsonify(
-        {
-            "users":[
-                'arpan',
-                'zack',
-                'jessie'
-            ]
-        }
-    )
+def get_users():
+    return jsonify(users=users)
 
-if __name__ == "__main__":
-    app.run(debug=True, port=8080)
+@socketio.on('connect')
+def handle_connect():
+    emit('users', users)
+
+@socketio.on('add_user')
+def handle_add_user(username):
+    users.append(username)
+    emit('users', users, broadcast=True)
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True, port=8080)

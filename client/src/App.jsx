@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
+import io from "socket.io-client";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import axios from "axios";
 import "./App.css";
+
+const socket = io("http://localhost:8080");
 
 function App() {
   const [count, setCount] = useState(0);
-  const [array, setArray] = useState([]);
-
-  const fetchAPI = async () => {
-    const response = await axios.get("http://localhost:8080/api/users");
-    console.log(response.data.users);
-    setArray(response.data.users);
-  };
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    fetchAPI();
+    // Listen for user updates
+    socket.on("users", (updatedUsers) => {
+      setUsers(updatedUsers);
+    });
+
+    return () => {
+      socket.off("users");
+    };
   }, []);
 
   return (
@@ -33,10 +36,8 @@ function App() {
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
-        {array.map((user, index) => (
-          <div key={index}>
-            <span>{user}</span>
-          </div>
+        {users.map((user, index) => (
+          <div key={index}>{user}</div>
         ))}
       </div>
       <p className='read-the-docs'>
